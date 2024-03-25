@@ -1,0 +1,44 @@
+---
+sensor:
+  - platform: template
+    id: sensor_heater
+    name: heater output
+    unit_of_measurement: "%"
+  - platform: pid
+    name: "pid integral"
+    type: INTEGRAL
+  - platform: pid
+    name: "pid proportional"
+    type: PROPORTIONAL
+  - platform: pid
+    name: "pid error"
+    type: ERROR
+
+
+number:
+  - platform: template
+    id: controller_kp
+    name: kp
+    min_value: 0
+    max_value: .05
+    step: .001
+    initial_value: .025
+    optimistic: true
+    on_value:
+      - climate.pid.set_control_parameters:
+          id: controller
+          kp: !lambda return x;
+
+  - platform: template
+    id: controller_ki
+    name: ki
+    min_value: 0
+    max_value: .0003
+    step: .00001
+    initial_value: .0001
+    optimistic: true
+    on_value:
+      - climate.pid.set_control_parameters:
+          id: controller
+          kp: !lambda return id(controller_kp).state;
+          ki: !lambda return x / $controller_deadband_ki_multiplier;

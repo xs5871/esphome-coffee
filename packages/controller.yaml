@@ -1,0 +1,172 @@
+---
+substitutions:
+  controller_deadband_ki_multiplier: '1000.'
+  controller_load_detection_threshold_p: '-1.5'
+  controller_load_detection_threshold_d: '-1.'
+  controller_pid_threshold_high: '5.'
+  controller_pid_threshold_low: '-15.'
+
+
+esphome:
+  includes:
+    - includes/controller.h
+
+
+globals:
+  - id: controller_deadband_ki_multiplier
+    type: float
+    initial_value: $controller_deadband_ki_multiplier
+
+  - id: controller_derivative
+    type: float
+
+  - id: controller_mode
+    type: uint8
+    initial_value: 'CONTROLLER_MODE_IDLE'
+
+  - id: controller_on_load
+    type: bool
+    initial_value: 'false'
+
+  - id: controller_pid_threshold_high
+    type: float
+    initial_value: $controller_pid_threshold_high
+
+  - id: controller_pid_threshold_low
+    type: float
+    initial_value: $controller_pid_threshold_low
+
+  - id: controller_target_temperature
+    type: float
+    restore_value: true
+
+
+climate:
+  - platform: pid
+    id: controller
+    sensor: temperature_sensor
+    default_target_temperature: 90°C
+    heat_output: heater
+    control_parameters:
+      kp: 0
+      ki: 0
+      min_integral: -0.08
+      max_integral: 0.08
+      starting_integral_term: 0.043
+    deadband_parameters:
+      threshold_high: ${controller_load_detection_threshold_d}°C
+      threshold_low: -${controller_load_detection_threshold_d}°C
+      kp_multiplier: .75
+      ki_multiplier: $controller_deadband_ki_multiplier
+    visual:
+      min_temperature: 60
+      max_temperature: 100
+    on_control:
+      - script.execute: controller_on_control
+    on_state:
+      - script.execute: controller_on_state
+
+
+script:
+  - id: controller_mode_pid
+    mode: restart
+    then:
+      - logger.log:
+          format: 'controller mode: pid'
+          level: INFO
+      - climate.pid.set_control_parameters:
+          id: controller
+          kp: !lambda return id(controller_kp).state;
+          ki: !lambda |-
+            return id(controller_ki).state / $controller_deadband_ki_multiplier;
+      - globals.set:
+          id: controller_mode
+          value: 'CONTROLLER_MODE_PID'
+
+  - id: controller_mode_load
+    mode: restart
+    then:
+      - logger.log:
+          format: 'controller mode: load'
+          level: INFO
+      - climate.pid.set_control_parameters:
+          id: controller
+          kp: 0
+          ki: 0
+      - globals.set:
+          id: controller_mode
+          value: 'CONTROLLER_MODE_LOAD'
+
+  - id: controller_mode_idle
+    then:
+      - logger.log:
+          format: 'controller mode: idle'
+          level: INFO
+      - climate.pid.set_control_parameters:
+          id: controller
+          kp: 0
+      - globals.set:
+          id: controller_mode
+          value: 'CONTROLLER_MODE_IDLE'
+
+  - id: controller_on_control
+    then:
+      - delay: .1s
+      - logger.log:
+          format: 'change PID mode to %i %.1f°C %.1f'
+          args:
+            - 'id(controller).mode'
+            - 'id(controller).target_temperature'
+            - 'id(controller).get_error_value()'
+          level: INFO
+      - if:
+          condition:
+            lambda: |-
+              return
+                id(controller_target_temperature) !=
+                id(controller).target_temperature;
+          # handle change in temperature
+          then:
+            - script.execute: controller_on_control_temperature
+          # handle change in mode
+          else:
+            - script.execute: controller_on_control_mode
+
+  - id: controller_on_control_mode
+    then:
+      - if:
+          condition:
+            lambda: return id(controller).mode == CLIMATE_MODE_HEAT;
+          then:
+            - script.execute: controller_on_state
+            - output.turn_on: power_supply
+            - component.resume:
+                id: temperature_sensor
+                update_interval: .2s
+          else:
+            - script.execute: controller_mode_idle
+            - output.turn_off: power_supply
+            - component.resume:
+                id: temperature_sensor
+                update_interval: 10s
+
+  - id: controller_on_control_temperature
+    then:
+      - globals.set:
+          id: controller_target_temperature
+          value: !lambda return id(controller).target_temperature;
+
+  - id: controller_on_state
+    then:
+      - lambda: |-
+          controller_load_detection(
+            $controller_load_detection_threshold_p,
+            $controller_load_detection_threshold_d);
+      - lambda: controller_on_state_();
+
+  - id: controller_on_boot
+    then:
+      - climate.control:
+          id: controller
+          mode: 'OFF'
+          target_temperature: !lambda return id(controller_target_temperature);

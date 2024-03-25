@@ -1,0 +1,29 @@
+---
+esphome:
+  includes:
+    - includes/power_switch.h
+
+
+binary_sensor:
+  - platform: gpio
+    id: powerswitch
+    pin:
+      number: $power_switch_pin
+      mode:
+        input: true
+        pulldown: true
+    internal: true
+    filters:
+      delayed_on: 50ms
+    on_press:
+      if:
+        condition:
+          lambda: return id(controller).mode == CLIMATE_MODE_OFF;
+        then:
+          climate.control:
+            id: controller
+            mode: 'HEAT'
+        else:
+          climate.control:
+            id: controller
+            mode: 'OFF'

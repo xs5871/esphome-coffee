@@ -1,0 +1,27 @@
+---
+switch:
+  - platform: template
+    id: power_save_switch
+    optimistic: true
+    restore_mode: ALWAYS_ON
+
+
+output:
+  - platform: gpio
+    id: power_supply
+    pin: $power_supply_pin
+
+
+script:
+  - id: power_supply_powersave
+    mode: restart
+    then:
+      - delay: 20min
+      - wait_until:
+          for:
+            time: 5s
+            condition:
+              switch.is_on: power_save_switch
+      - climate.control:
+          id: controller
+          mode: 'OFF'

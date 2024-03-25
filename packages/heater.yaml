@@ -1,0 +1,22 @@
+---
+output:
+  - platform: sigma_delta_output
+    id: heater_output
+    update_interval: .01s
+    pin:
+      number: $heater_pin
+      inverted: false
+
+  - platform: template
+    id: heater
+    type: float
+    write_action:
+      - output.set_level:
+          id: heater_output
+          level: !lambda |-
+            return id(controller_mode) == CONTROLLER_MODE_LOAD ? 1. : state;
+      - sensor.template.publish:
+          id: sensor_heater
+          state: !lambda |-
+            return 100 *
+            (id(controller_mode) == CONTROLLER_MODE_LOAD ? 1. : state);

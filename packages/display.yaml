@@ -1,0 +1,63 @@
+---
+esphome:
+  includes:
+    - includes/display.h
+
+
+globals:
+  - id: display_timer_start_time
+    type: int
+    initial_value: '0'
+  - id: display_mode_ttemperature
+    type: bool
+    initial_value: 'false'
+
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+
+display:
+  platform: tm1637
+  id: tm1637_display
+  clk_pin: $display_clk_pin
+  dio_pin: $display_dio_pin
+  length: 4
+  intensity: 0
+  lambda: display_lambda(it);
+
+
+script:
+  - id: display_timer_start
+    then:
+      - globals.set:
+          id: display_timer_start_time
+          value: !lambda return id(homeassistant_time).now().timestamp;
+      - logger.log:
+          format: 'display mode: timer start'
+          level: INFO
+
+  - id: display_timer_stop
+    then:
+      - globals.set:
+          id: display_timer_start_time
+          value: '0'
+      - logger.log:
+          format: 'display mode: timer stop'
+          level: INFO
+
+  - id: display_mode_target_temperature
+    mode: restart
+    then:
+      - globals.set:
+          id: display_mode_ttemperature
+          value: 'true'
+      - logger.log:
+          format: 'display mode: target_temperature'
+          level: INFO
+      - delay: 3s
+      - globals.set:
+          id: display_mode_ttemperature
+          value: 'false'
+      - lambda: id(tm1637_display).set_intensity(0);

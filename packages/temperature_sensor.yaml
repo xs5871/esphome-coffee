@@ -1,0 +1,21 @@
+---
+esphome:
+  libraries:
+    - lebuni/ZACwire for TSIC@^2.0.0
+
+
+external_components:
+  - source: github://xs5871/esphome-tsic
+
+
+sensor:
+  - platform: tsic
+    id: temperature_sensor
+    pin: $temperature_sensor_pin
+    model: TSIC306
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    filters:
+      - quantile:
+          window_size: 3
+          send_every: 1

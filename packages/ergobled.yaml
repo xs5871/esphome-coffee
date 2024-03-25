@@ -1,0 +1,51 @@
+---
+substitutions:
+  ergobled_gradient_trln: 1s
+
+
+esphome:
+  includes:
+    - includes/ergobled.h
+
+
+globals:
+  - id: ergobled_gradient
+    type: float
+
+
+light:
+  - platform: neopixelbus
+    id: ergobled
+    type: GRB
+    variant: WS2811
+    pin: $ergobled_pin
+    num_leds: 1
+    internal: true
+    default_transition_length: .2s
+    color_correct: [1, .90, .80]
+    effects:
+      - lambda:
+          name: gradient
+          update_interval: $ergobled_gradient_trln
+          lambda: ergobled_mode_gradient_();
+
+
+script:
+  - id: ergobled_mode_gradient
+    then:
+      - light.turn_on:
+          id: ergobled
+          effect: gradient
+
+  - id: ergobled_mode_idle
+    then:
+      - light.turn_off: ergobled
+
+  - id: ergobled_mode_load_band
+    then:
+      - light.turn_on:
+          id: ergobled
+          red: 1
+          green: 1
+          blue: 1
+          effect: none

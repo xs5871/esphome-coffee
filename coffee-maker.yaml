@@ -1,0 +1,132 @@
+---
+substitutions:
+  power_switch_pin: D0
+  display_clk_pin: D1
+  display_dio_pin: D2
+  # flash_button_pin: D3
+  # board_led_pin: D4
+  temperature_sensor_pin: D5
+  heater_pin: D6
+  power_supply_pin: D7
+  ergobled_pin: D8
+
+
+esphome:
+  name: coffee-maker
+  platform: ESP8266
+  board: d1_mini
+  esp8266_restore_from_flash: true
+  on_boot:
+    priority: 599
+    then:
+      - script.execute: controller_on_boot
+      - script.execute: controller_on_control_temperature
+
+
+logger:
+
+api:
+
+ota:
+
+wifi: !secret wifi
+
+
+packages:
+  controller: !include packages/controller.yaml
+  debugging: !include packages/debugging.yaml
+  display: !include packages/display.yaml
+  ergobled: !include packages/ergobled.yaml
+  heater: !include packages/heater.yaml
+  power_supply: !include packages/power_supply.yaml
+  power_switch: !include packages/power_switch.yaml
+  temperature_sensor: !include packages/temperature_sensor.yaml
+
+
+globals:
+  - id: !extend controller_pid_threshold_low
+    initial_value: '-18.'
+
+
+climate:
+  - id: !extend controller
+    name: 'coffee maker'
+    deadband_parameters:
+      threshold_high: 1.5°C
+      threshold_low: -1.5°C
+
+
+light:
+  - id: !extend ergobled
+    pin: $ergobled_pin
+    num_leds: 3
+
+
+output:
+  - id: !extend power_supply
+    pin: $power_supply_pin
+
+
+switch:
+  - id: !extend power_save_switch
+    name: 'coffee maker power save'
+
+
+number:
+  - platform: template
+    id: brew_counter
+    name: "coffee maker brew counter"
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 4294967295
+    step: 1
+
+  - id: !extend controller_kp
+    initial_value: .022
+
+
+script:
+  - id: ergobled_mode_load
+    then:
+      - light.turn_on:
+          id: ergobled
+          red: 1
+          green: .8
+          blue: .8
+          effect: none
+
+  - id: !extend controller_mode_pid
+    then:
+      - script.execute: ergobled_mode_gradient
+
+  - id: !extend controller_mode_load
+    then:
+      - script.execute: power_supply_powersave
+      - script.execute: ergobled_mode_load
+
+  - id: !extend controller_on_control_temperature
+    then:
+      - script.execute: display_mode_target_temperature
+
+  - id: !extend controller_on_control_mode
+    then:
+      - if:
+          condition:
+            lambda: return id(controller).mode == CLIMATE_MODE_HEAT;
+          then:
+            - script.execute: power_supply_powersave
+            - lambda: id(tm1637_display).set_intensity(7);
+            - component.resume:
+                id: tm1637_display
+                update_interval: .5s
+          else:
+            - script.execute: ergobled_mode_idle
+            - lambda: id(tm1637_display).set_intensity(0);
+            - component.resume:
+                id: tm1637_display
+                update_interval: 1s
+
+  - id: !extend display_timer_start
+    then:
+      - number.increment: brew_counter
