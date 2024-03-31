@@ -8,6 +8,7 @@ C++ code for DIY IOT coffee makers and espresso machines, powered by
 ## Features
 
 Some highlights:
+
 * PID temperature control via ESPHome's climate component
 * 4-digit 7-segment display
 * ergobled status indicator
@@ -16,6 +17,7 @@ Some highlights:
 
 
 ## Documentation
+
 *TODO*: documentation.
 
 
