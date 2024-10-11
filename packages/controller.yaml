@@ -21,7 +21,7 @@ globals:
     type: float
 
   - id: controller_mode
-    type: uint8
+    type: uint8_t
     initial_value: 'CONTROLLER_MODE_IDLE'
 
   - id: controller_on_load

@@ -1,5 +1,5 @@
 const char* animation = " _-*:%";
-static uint8 i = 0;
+static uint8_t i = 0;
 
 void display_timer(esphome::tm1637::TM1637Display &it) {
     const int dt = id(homeassistant_time).now().timestamp
@@ -9,7 +9,7 @@ void display_timer(esphome::tm1637::TM1637Display &it) {
 
 void display_temperature(esphome::tm1637::TM1637Display &it) {
     const float ep = id(controller).get_proportional_term();
-    uint8 idx = 4;
+    uint8_t idx = 4;
 
     if (id(controller_mode) == CONTROLLER_MODE_LOAD) {
         idx = 5;
