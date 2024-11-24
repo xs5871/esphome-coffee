@@ -1,0 +1,21 @@
+---
+number:
+  - platform: template
+    id: power_save_idle_time
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 4294967295
+    initial_value: 1200
+    step: 1
+    unit_of_measurement: s
+
+
+script:
+  - id: power_save_reset
+    mode: restart
+    then:
+      - delay: !lambda return 1000 * id(power_save_idle_time).state;
+      - climate.control:
+          id: controller
+          mode: 'OFF'

@@ -21,6 +21,7 @@ esphome:
     then:
       - script.execute: controller_on_boot
       - script.execute: controller_on_control_temperature
+      - script.execute: power_save_reset
 
 
 logger:
@@ -38,6 +39,7 @@ packages:
   display: !include packages/display.yaml
   ergobled: !include packages/ergobled.yaml
   heater: !include packages/heater.yaml
+  power_save: !include packages/power_save.yaml
   power_supply: !include packages/power_supply.yaml
   power_switch: !include packages/power_switch.yaml
   temperature_sensor: !include packages/temperature_sensor.yaml
@@ -65,11 +67,6 @@ light:
 output:
   - id: !extend power_supply
     pin: $power_supply_pin
-
-
-switch:
-  - id: !extend power_save_switch
-    name: 'coffee maker power save'
 
 
 number:
@@ -102,7 +99,7 @@ script:
 
   - id: !extend controller_mode_load
     then:
-      - script.execute: power_supply_powersave
+      - script.execute: power_save_reset
       - script.execute: ergobled_mode_load
 
   - id: !extend controller_on_control_temperature
@@ -115,7 +112,7 @@ script:
           condition:
             lambda: return id(controller).mode == CLIMATE_MODE_HEAT;
           then:
-            - script.execute: power_supply_powersave
+            - script.execute: power_save_reset
             - lambda: id(tm1637_display).set_intensity(7);
             - component.resume:
                 id: tm1637_display
