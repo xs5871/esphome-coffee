@@ -1,9 +1,4 @@
 ---
-esphome:
-  libraries:
-    - lebuni/ZACwire for TSIC@^2.0.0
-
-
 external_components:
   - source: github://xs5871/esphome-tsic
 
