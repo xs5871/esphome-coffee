@@ -1,0 +1,19 @@
+---
+substitutions:
+  load_detection_threshold_p: '-1.5'
+  load_detection_threshold_d: '-1.'
+
+
+esphome:
+  includes:
+    - includes/load_detection.h
+
+
+script:
+  - id: !extend controller_on_state
+    then:
+      - lambda: |-
+          load_detection_(
+            $load_detection_threshold_p,
+            $load_detection_threshold_d
+          );

@@ -56,7 +56,7 @@ void display_lambda(esphome::tm1637::TM1637Display &it) {
 
     // display mode: timer
     const bool _load = (id(controller_mode) == CONTROLLER_MODE_LOAD)
-                    && (id(controller_on_load));
+                    && (id(controller_load).state);
 
     if ((! id(display_timer_start_time)) && (_load)) {
         id(display_timer_start).execute();

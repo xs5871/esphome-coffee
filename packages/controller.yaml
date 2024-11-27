@@ -1,8 +1,6 @@
 ---
 substitutions:
   controller_deadband_ki_multiplier: '1000.'
-  controller_load_detection_threshold_p: '-1.5'
-  controller_load_detection_threshold_d: '-1.'
   controller_pid_threshold_high: '5.'
   controller_pid_threshold_low: '-15.'
 
@@ -17,16 +15,12 @@ globals:
     type: float
     initial_value: $controller_deadband_ki_multiplier
 
-  - id: controller_derivative
+  - id: controller_load_multiplier
     type: float
 
   - id: controller_mode
     type: uint8_t
     initial_value: 'CONTROLLER_MODE_IDLE'
-
-  - id: controller_on_load
-    type: bool
-    initial_value: 'false'
 
   - id: controller_pid_threshold_high
     type: float
@@ -39,6 +33,11 @@ globals:
   - id: controller_target_temperature
     type: float
     restore_value: true
+
+
+binary_sensor:
+  - platform: template
+    id: controller_load
 
 
 climate:
@@ -158,10 +157,6 @@ script:
 
   - id: controller_on_state
     then:
-      - lambda: |-
-          controller_load_detection(
-            $controller_load_detection_threshold_p,
-            $controller_load_detection_threshold_d);
       - lambda: controller_on_state_();
 
   - id: controller_on_boot

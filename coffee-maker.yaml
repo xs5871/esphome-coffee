@@ -39,6 +39,7 @@ packages:
   display: !include packages/display.yaml
   ergobled: !include packages/ergobled.yaml
   heater: !include packages/heater.yaml
+  load_detection: !include packages/load_detection.yaml
   power_save: !include packages/power_save.yaml
   power_supply: !include packages/power_supply.yaml
   power_switch: !include packages/power_switch.yaml
