@@ -1,6 +1,7 @@
 ---
 substitutions:
   ergobled_gradient_trln: 1s
+  ergobled_gradient_range: -($load_detection_threshold_p)
 
 
 esphome:
@@ -27,7 +28,7 @@ light:
       - lambda:
           name: gradient
           update_interval: $ergobled_gradient_trln
-          lambda: ergobled_mode_gradient_();
+          lambda: ergobled_mode_gradient_($ergobled_gradient_range);
 
 
 script:
