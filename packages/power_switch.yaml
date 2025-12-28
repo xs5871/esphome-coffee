@@ -11,10 +11,10 @@ binary_sensor:
       number: $power_switch_pin
       mode:
         input: true
-        pulldown: true
+        pullup: true
     internal: true
     filters:
-      delayed_on: 50ms
+      settle: 200ms
     on_press:
       if:
         condition:
