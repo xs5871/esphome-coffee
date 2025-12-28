@@ -19,13 +19,13 @@ time:
 
 
 display:
-  platform: tm1637
-  id: tm1637_display
-  clk_pin: $display_clk_pin
-  dio_pin: $display_dio_pin
-  length: 4
-  intensity: 0
-  lambda: display_lambda(it);
+  - platform: tm1637
+    id: tm1637_display
+    clk_pin: $display_clk_pin
+    dio_pin: $display_dio_pin
+    length: 4
+    intensity: 0
+    lambda: display_lambda(it);
 
 
 script:
